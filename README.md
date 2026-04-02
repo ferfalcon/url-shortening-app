@@ -1,57 +1,114 @@
-# Shortly URL shortening
+# Shortly URL Shortening App
 
-![Design preview for the Shortly URL shortening API coding challenge](preview.jpg)
+![Design preview for the original Frontend Mentor challenge](preview.jpg)
 
-This is a solution to the [Shortly URL shortening API Challenge challenge](https://www.frontendmentor.io/challenges/url-shortening-api-landing-page-2ce3ob-G).
+This repository turns the Frontend Mentor URL shortening landing page challenge into a portfolio-quality fullstack app.
 
-## Table of contents
+The current milestone is the initial workspace foundation:
 
-- [Overview](#overview)
-  - [The challenge](#the-challenge)
-  - [Links](#links)
-- [My process](#my-process)
-  - [Built with](#built-with)
-  - [Useful resources](#useful-resources)
-- [Author](#author)
+- a `pnpm` monorepo
+- a minimal React + TypeScript + Vite frontend in `apps/web`
+- a minimal Express + TypeScript API in `apps/api`
+- a reserved `packages/shared` area for future shared contracts only when they add real value
 
-## Overview
+The original challenge reference assets are preserved in `frontend-mentor/`.
 
-### The challenge
+## Project structure
 
-This app integrates with [Spoo.me](https://docs.spoo.me/) and lets users:
+```text
+apps/
+  api/            Minimal Express API scaffold with GET /healthz
+  web/            Minimal React app scaffold with React Router and Tailwind
+frontend-mentor/  Original challenge assets and design references
+packages/
+  shared/         Reserved for future shared types/schemas
+```
 
-- View the optimal layout for the site depending on their device's screen size
-- Shorten any valid URL
-- See a list of their shortened links, even after refreshing the browser
-- Copy the shortened link to their clipboard in a single click
-- Receive an error message when the `form` is submitted if:
-  - The `input` field is empty
+## Prerequisites
 
-### Links
+- Node.js 22 or newer
+- pnpm 10 or newer
 
-- Solution URL: [https://github.com/ferfalcon/url-shortening-app](https://github.com/ferfalcon/url-shortening-app)
-- Live Site URL: [TBD]()
+## Getting started
 
-## My process
+1. Install dependencies:
 
-### Built with
+   ```bash
+   pnpm install
+   ```
 
-- Semantic HTML5 markup
-- CSS custom properties
-- Flexbox
-- CSS Grid
-- Mobile-first workflow
-- [React](https://react.dev/) - The library for web and native user interfaces
-- [Next.js](https://expressjs.com/) - Fast, unopinionated, minimalist web framework for Node.js
-- [Spoo.me](https://docs.spoo.me/) - A link management infrastructure platform that provides a comprehensive API for shortening URLs
+2. Create local env files from the examples:
 
-### Useful resources
+   ```bash
+   cp apps/web/.env.example apps/web/.env
+   cp apps/api/.env.example apps/api/.env
+   ```
 
-- [AGENTS.md](https://agents.md/) - A simple, open format for guiding coding agents.
-- [Example resource 2](https://www.example.com) - This is an amazing article which helped me finally understand XYZ. I'd recommend it to anyone still learning this concept.
+3. Start the workspace:
 
-## Author
+   ```bash
+   pnpm dev
+   ```
 
-* LinkedIn: [Fernando Falcon](https://www.linkedin.com/in/fernandofalcon/)
-* Website: [ferfalcon.com](http://ferfalcon.com/)
-* Frontend Mentor: [@ferfalcon](https://www.frontendmentor.io/profile/ferfalcon/)
+By default:
+
+- web runs at `http://localhost:5173`
+- API runs at `http://localhost:3001`
+- health check is available at `http://localhost:3001/healthz`
+
+## Environment
+
+`apps/web/.env.example`
+
+```bash
+VITE_API_BASE_URL=http://localhost:3001
+```
+
+`apps/api/.env.example`
+
+```bash
+PORT=3001
+```
+
+No secrets are required yet.
+
+## Available scripts
+
+From the repository root:
+
+- `pnpm dev` runs the web and API apps in parallel
+- `pnpm build` builds all workspace packages that expose a build script
+- `pnpm lint` runs linting across workspace packages that expose a lint script
+- `pnpm typecheck` runs TypeScript checks across workspace packages that expose a typecheck script
+
+You can also run a single app directly, for example:
+
+```bash
+pnpm --filter @shortly/web dev
+pnpm --filter @shortly/api dev
+```
+
+## What is implemented
+
+- `pnpm` workspace foundation
+- root scripts for local development and verification
+- minimal React app with React Router and Tailwind configured
+- minimal Express API with a thin route/controller/service path for `GET /healthz`
+- basic env examples for web and API
+- placeholder folder structure for future feature work
+
+## What is intentionally not implemented yet
+
+- URL shortening flow
+- provider integration
+- authentication and session handling
+- Prisma or database code
+- link history/dashboard features
+- production deployment setup
+- Docker setup
+- final landing page UI
+
+## Notes
+
+- `frontend-mentor/` is preserved intentionally as a reference source for the eventual product UI.
+- `packages/shared` is intentionally empty for now except for documentation. It should only hold stable shared types, schemas, or tiny utilities that are genuinely shared by both apps.
