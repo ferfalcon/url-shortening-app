@@ -1,0 +1,63 @@
+@baseUrl = http://localhost:3001
+@json = application/json
+
+### Health check
+GET {{baseUrl}}/healthz
+
+### Create link - valid
+POST {{baseUrl}}/api/links
+Content-Type: {{json}}
+
+{
+  "originalUrl": "https://example.com/some-page"
+}
+
+### Create link - valid with custom alias
+POST {{baseUrl}}/api/links
+Content-Type: {{json}}
+
+{
+  "originalUrl": "https://example.com/custom",
+  "customAlias": "my-alias"
+}
+
+### Create link - invalid URL
+POST {{baseUrl}}/api/links
+Content-Type: {{json}}
+
+{
+  "originalUrl": "not-a-url"
+}
+
+### Create link - alias conflict (run after creating the same alias once)
+POST {{baseUrl}}/api/links
+Content-Type: {{json}}
+
+{
+  "originalUrl": "https://example.com/another-page",
+  "customAlias": "my-alias"
+}
+
+### Create link - empty body
+POST {{baseUrl}}/api/links
+Content-Type: {{json}}
+
+{}
+
+### Create link - invalid alias characters
+POST {{baseUrl}}/api/links
+Content-Type: {{json}}
+
+{
+  "originalUrl": "https://example.com/test",
+  "customAlias": "bad alias!"
+}
+
+### Create link - blank alias should behave as no alias
+POST {{baseUrl}}/api/links
+Content-Type: {{json}}
+
+{
+  "originalUrl": "https://example.com/blank-alias",
+  "customAlias": ""
+}
