@@ -1,0 +1,17 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Link {
+  id          String   @id
+  originalUrl String
+  shortUrl    String
+  shortCode   String
+  customAlias String?  @unique
+  createdAt   DateTime @default(now())
+}

@@ -17,11 +17,11 @@ const httpUrlSchema = z
 const customAliasSchema = z
   .string()
   .trim()
-  .min(3, "customAlias must be between 3 and 32 characters")
-  .max(32, "customAlias must be between 3 and 32 characters")
+  .min(3, "customAlias must be between 3 and 16 characters")
+  .max(16, "customAlias must be between 3 and 16 characters")
   .regex(
-    /^[a-zA-Z0-9-]+$/,
-    "customAlias may contain only letters, numbers, and hyphens"
+    /^[a-zA-Z0-9_-]+$/,
+    "customAlias may contain only letters, numbers, hyphens, and underscores"
   );
 
 export const createLinkRequestSchema = z.object({

@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { AppError } from "../lib/app-error";
 import { spooShortLinkProvider } from "../providers/adapters/spoo-short-link-provider";
-import { inMemoryLinkRepository } from "../repositories/in-memory-link.repository";
 import type { LinkRepository, StoredLink } from "../repositories/link.repository";
+import { prismaLinkRepository } from "../repositories/prisma-link.repository";
 import type { CreateLinkRequest } from "../schemas/link.schemas";
 import type { ShortLinkProvider } from "../providers/interfaces/short-link-provider";
 
@@ -75,6 +75,6 @@ export function buildCreateLinkService({
 }
 
 export const createLink = buildCreateLinkService({
-  linkRepository: inMemoryLinkRepository,
+  linkRepository: prismaLinkRepository,
   shortLinkProvider: spooShortLinkProvider
 });

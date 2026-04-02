@@ -9,7 +9,7 @@ The current milestone is the initial workspace foundation:
 - a `pnpm` monorepo
 - a minimal React + TypeScript + Vite frontend in `apps/web`
 - a minimal Express + TypeScript API in `apps/api`
-- a first backend slice for anonymous link creation using in-memory persistence and a real Spoo.me provider adapter
+- a first backend slice for anonymous link creation using Prisma + PostgreSQL persistence and a real Spoo.me provider adapter
 - a reserved `packages/shared` area for future shared contracts only when they add real value
 
 The original challenge reference assets are preserved in `frontend-mentor/`.
@@ -60,10 +60,8 @@ By default:
 
 ## Environment
 
-- Local `.env` files are optional for basic local development.
-- Create them only when you want to override the defaults.
-
-In local development, the web app can run without `apps/web/.env` because Vite proxies `/api` requests to the local API by default.
+- `apps/web/.env` remains optional for basic local development because Vite proxies `/api` requests to the local API by default.
+- The API now requires `DATABASE_URL`, provided either through the shell environment or `apps/api/.env`.
 
 `apps/web/.env.example`
 
@@ -74,11 +72,12 @@ VITE_API_BASE_URL=http://localhost:3001
 `apps/api/.env.example`
 
 ```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/shortly?schema=public
 PORT=3001
 SPOO_API_BASE_URL=https://spoo.me/api/v1
 ```
 
-No secrets are required for anonymous Spoo.me link creation.
+No API secret is required for anonymous Spoo.me link creation, but a PostgreSQL connection string is now required for persistence.
 
 ## Available scripts
 
@@ -104,14 +103,13 @@ pnpm --filter @shortly/api dev
 - minimal Express API with a thin route/controller/service path for `GET /healthz`
 - `POST /api/links` for anonymous link creation with backend Zod validation
 - internal short-link provider interface backed by a Spoo.me adapter
-- temporary in-memory repository for created links
+- Prisma-backed PostgreSQL persistence for created links
 - basic env examples for web and API
 - placeholder folder structure for future feature work
 
 ## What is intentionally not implemented yet
 
 - authentication and session handling
-- Prisma or database code
 - link history/dashboard features
 - production deployment setup
 - Docker setup
