@@ -38,6 +38,10 @@ Content-Type: {{json}}
   "customAlias": "my-alias"
 }
 
+### Provider failure tip
+# Temporarily run the API with an invalid SPOO_API_BASE_URL to verify normalized
+# upstream failure handling without changing the route/controller/service flow.
+
 ### Create link - empty body
 POST {{baseUrl}}/api/links
 Content-Type: {{json}}

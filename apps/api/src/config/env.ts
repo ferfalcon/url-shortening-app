@@ -11,10 +11,10 @@ const httpUrlSchema = z
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3001),
-  STUB_SHORT_BASE_URL: httpUrlSchema.default("https://stub.local")
+  SPOO_API_BASE_URL: httpUrlSchema.default("https://spoo.me/api/v1")
 });
 
 export const env = envSchema.parse({
   PORT: process.env.PORT,
-  STUB_SHORT_BASE_URL: process.env.STUB_SHORT_BASE_URL
+  SPOO_API_BASE_URL: process.env.SPOO_API_BASE_URL
 });

@@ -1,6 +1,7 @@
 export type AppErrorCode =
   | "INVALID_REQUEST"
   | "ALIAS_CONFLICT"
+  | "SHORTENING_FAILED"
   | "INTERNAL_SERVER_ERROR";
 
 export class AppError extends Error {
