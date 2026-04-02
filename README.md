@@ -9,6 +9,7 @@ The current milestone is the initial workspace foundation:
 - a `pnpm` monorepo
 - a minimal React + TypeScript + Vite frontend in `apps/web`
 - a minimal Express + TypeScript API in `apps/api`
+- a first backend slice for anonymous link creation using in-memory persistence and a stub short-link provider
 - a reserved `packages/shared` area for future shared contracts only when they add real value
 
 The original challenge reference assets are preserved in `frontend-mentor/`.
@@ -17,7 +18,7 @@ The original challenge reference assets are preserved in `frontend-mentor/`.
 
 ```text
 apps/
-  api/            Minimal Express API scaffold with GET /healthz
+  api/            Express API scaffold with GET /healthz and POST /api/links
   web/            Minimal React app scaffold with React Router and Tailwind
 frontend-mentor/  Original challenge assets and design references
 packages/
@@ -55,6 +56,7 @@ By default:
 - web runs at `http://localhost:5173`
 - API runs at `http://localhost:3001`
 - health check is available at `http://localhost:3001/healthz`
+- link creation is available at `http://localhost:3001/api/links`
 
 ## Environment
 
@@ -68,6 +70,7 @@ VITE_API_BASE_URL=http://localhost:3001
 
 ```bash
 PORT=3001
+STUB_SHORT_BASE_URL=https://stub.local
 ```
 
 No secrets are required yet.
@@ -94,13 +97,16 @@ pnpm --filter @shortly/api dev
 - root scripts for local development and verification
 - minimal React app with React Router and Tailwind configured
 - minimal Express API with a thin route/controller/service path for `GET /healthz`
+- `POST /api/links` for anonymous link creation with backend Zod validation
+- internal short-link provider interface with a temporary stub adapter
+- temporary in-memory repository for created links
 - basic env examples for web and API
 - placeholder folder structure for future feature work
 
 ## What is intentionally not implemented yet
 
 - URL shortening flow
-- provider integration
+- real provider integration
 - authentication and session handling
 - Prisma or database code
 - link history/dashboard features
