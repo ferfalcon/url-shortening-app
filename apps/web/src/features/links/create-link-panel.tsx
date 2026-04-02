@@ -32,11 +32,11 @@ const createLinkFormSchema = z.object({
     z
       .string()
       .trim()
-      .min(3, "Alias must be between 3 and 32 characters.")
-      .max(32, "Alias must be between 3 and 32 characters.")
+      .min(3, "Alias must be between 3 and 16 characters.")
+      .max(16, "Alias must be between 3 and 16 characters.")
       .regex(
-        /^[a-zA-Z0-9-]+$/,
-        "Alias may contain only letters, numbers, and hyphens."
+        /^[a-zA-Z0-9_-]+$/,
+        "Alias may contain only letters, numbers, hyphens, and underscores."
       )
       .optional()
   )
