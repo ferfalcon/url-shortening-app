@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import bgShortenDesktopUrl from "../../assets/landing/bg-shorten-desktop.svg";
+import bgShortenMobileUrl from "../../assets/landing/bg-shorten-mobile.svg";
 import {
   ApiRequestError,
   createLink,
@@ -11,7 +13,7 @@ const createLinkFormSchema = z.object({
   originalUrl: z
     .string()
     .trim()
-    .min(1, "Please enter a URL.")
+    .min(1, "Please add a link")
     .refine((value) => {
       try {
         const url = new URL(value);
@@ -20,7 +22,7 @@ const createLinkFormSchema = z.object({
       } catch {
         return false;
       }
-    }, "Enter a valid absolute http or https URL."),
+    }, "Please enter a valid URL"),
   customAlias: z.preprocess(
     (value) => {
       if (typeof value !== "string") {
@@ -47,27 +49,20 @@ type CreateLinkFormValues = {
   customAlias: string;
 };
 
+type CopyStatus = "copied" | "error" | "idle";
+
 function isFormField(
   value: unknown
 ): value is keyof CreateLinkFormValues {
   return value === "originalUrl" || value === "customAlias";
 }
 
-function formatCreatedAt(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.valueOf())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short"
-  }).format(date);
-}
+const inputClassName =
+  "w-full rounded-[10px] border-[3px] bg-white px-4 py-3 text-lg leading-9 text-[var(--color-very-dark-violet)] outline-none transition placeholder:text-[var(--color-grayish-violet)] focus-visible:border-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-cyan)] disabled:cursor-not-allowed disabled:opacity-70 md:min-h-16 md:px-8";
 
 export function CreateLinkPanel() {
   const [createdLink, setCreatedLink] = useState<CreatedLink | null>(null);
+  const [copyStatus, setCopyStatus] = useState<CopyStatus>("idle");
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const {
     register,
@@ -84,7 +79,7 @@ export function CreateLinkPanel() {
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmissionError(null);
-    setCreatedLink(null);
+    setCopyStatus("idle");
     clearErrors();
 
     const parsedValues = createLinkFormSchema.safeParse(values);
@@ -113,8 +108,18 @@ export function CreateLinkPanel() {
       });
 
       setCreatedLink(nextLink);
+      setCopyStatus("idle");
     } catch (error) {
       if (error instanceof ApiRequestError) {
+        if (error.statusCode === 409 && parsedValues.data.customAlias) {
+          setError("customAlias", {
+            type: "server",
+            message: error.message
+          });
+
+          return;
+        }
+
         setSubmissionError(error.message);
 
         return;
@@ -124,43 +129,63 @@ export function CreateLinkPanel() {
     }
   });
 
-  return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-      <div className="rounded-[2rem] border border-slate-900/10 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-8">
-        <div className="max-w-2xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Create a short link
-          </p>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-            Anonymous link creation
-          </h2>
-          <p className="mt-3 text-sm leading-6 text-slate-700">
-            This is the first tiny frontend integration with the backend slice.
-            Frontend validation stays lightweight, and the backend remains the
-            source of truth.
-          </p>
-        </div>
+  async function handleCopyShortUrl() {
+    if (!createdLink) {
+      return;
+    }
 
-        <form className="mt-8 grid gap-4" noValidate onSubmit={onSubmit}>
-          <div className="grid gap-2">
-            <label
-              className="text-sm font-medium text-slate-900"
-              htmlFor="originalUrl"
-            >
+    try {
+      await navigator.clipboard.writeText(createdLink.shortUrl);
+      setCopyStatus("copied");
+    } catch {
+      setCopyStatus("error");
+    }
+  }
+
+  return (
+    <section className="grid gap-4">
+      <div className="relative overflow-hidden rounded-[10px] bg-[var(--color-dark-violet)] px-6 py-6 shadow-[0_16px_32px_rgba(58,48,84,0.18)] md:px-16 md:py-[52px]">
+        <img
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover object-right-top md:hidden"
+          src={bgShortenMobileUrl}
+        />
+        <img
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 hidden h-full w-full object-cover md:block"
+          src={bgShortenDesktopUrl}
+        />
+
+        <form
+          className="relative grid gap-4 md:grid-cols-[minmax(0,1fr)_188px]"
+          noValidate
+          onSubmit={onSubmit}
+        >
+          <div className="grid gap-2 md:gap-3">
+            <label className="sr-only" htmlFor="originalUrl">
               Original URL
             </label>
             <input
               {...register("originalUrl")}
+              aria-invalid={errors.originalUrl ? "true" : "false"}
               aria-describedby={errors.originalUrl ? "originalUrl-error" : undefined}
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-100"
+              autoComplete="url"
+              className={`${inputClassName} ${
+                errors.originalUrl
+                  ? "border-[var(--color-red)] placeholder:text-[rgba(244,98,98,0.55)]"
+                  : "border-transparent"
+              }`}
               disabled={isSubmitting}
               id="originalUrl"
-              placeholder="https://example.com/some-page"
+              placeholder="Shorten a link here..."
+              spellCheck={false}
               type="url"
             />
             {errors.originalUrl ? (
               <p
-                className="text-sm text-rose-700"
+                className="text-xs font-medium italic text-[var(--color-red)] md:text-sm"
                 id="originalUrl-error"
                 role="alert"
               >
@@ -169,109 +194,121 @@ export function CreateLinkPanel() {
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <button
+            className="inline-flex min-h-12 items-center justify-center rounded-[10px] bg-[var(--color-cyan)] px-6 py-3 text-lg font-bold text-white transition hover:bg-[var(--color-cyan-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-cyan)] disabled:cursor-not-allowed disabled:bg-[var(--color-cyan-hover)] md:min-h-16"
+            disabled={isSubmitting}
+            type="submit"
+          >
+            {isSubmitting ? "Shortening..." : "Shorten It!"}
+          </button>
+
+          <div className="grid gap-2 md:col-span-2 md:gap-3">
             <label
-              className="text-sm font-medium text-slate-900"
+              className="text-sm font-bold text-white"
               htmlFor="customAlias"
             >
-              Custom alias <span className="text-slate-500">(optional)</span>
+              Custom alias <span className="font-medium text-white/70">(optional)</span>
             </label>
             <input
               {...register("customAlias")}
+              aria-invalid={errors.customAlias ? "true" : "false"}
               aria-describedby={errors.customAlias ? "customAlias-error" : undefined}
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-100"
+              className={`${inputClassName} ${
+                errors.customAlias
+                  ? "border-[var(--color-red)] placeholder:text-[rgba(244,98,98,0.55)]"
+                  : "border-transparent"
+              }`}
               disabled={isSubmitting}
               id="customAlias"
               placeholder="my-alias"
+              spellCheck={false}
               type="text"
             />
             {errors.customAlias ? (
               <p
-                className="text-sm text-rose-700"
+                className="text-xs font-medium italic text-[var(--color-red)] md:text-sm"
                 id="customAlias-error"
                 role="alert"
               >
                 {errors.customAlias.message}
               </p>
             ) : (
-              <p className="text-sm text-slate-500">
-                Leave blank to let the backend choose the short code.
+              <p className="text-sm text-white/75">
+                Leave blank to let the API choose the short code.
               </p>
             )}
           </div>
 
           {submissionError ? (
             <div
-              className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+              className="rounded-[10px] border border-[rgba(244,98,98,0.3)] bg-[rgba(244,98,98,0.1)] px-4 py-3 text-sm text-white md:col-span-2"
               role="alert"
             >
               {submissionError}
             </div>
           ) : null}
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              className="inline-flex min-w-40 items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 disabled:cursor-not-allowed disabled:bg-slate-400"
-              disabled={isSubmitting}
-              type="submit"
-            >
-              {isSubmitting ? "Creating..." : "Create short link"}
-            </button>
-            <p className="text-sm text-slate-500">
-              The request is sent to `POST /api/links`.
-            </p>
-          </div>
         </form>
       </div>
 
-      <article className="rounded-[2rem] border border-slate-900/10 bg-white/75 p-6 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-          Latest response
+      <div aria-live="polite" className="grid gap-4">
+        <p className="sr-only">
+          {copyStatus === "copied"
+            ? "Short link copied to clipboard."
+            : copyStatus === "error"
+              ? "Copy to clipboard failed."
+              : createdLink
+                ? `Latest short link ready: ${createdLink.shortUrl}`
+                : ""}
         </p>
         {createdLink ? (
-          <dl className="mt-5 grid gap-4 text-sm">
-            <div>
-              <dt className="font-medium text-slate-500">Original URL</dt>
-              <dd className="mt-1 break-all text-slate-900">
-                {createdLink.originalUrl}
-              </dd>
-            </div>
-            <div>
-              <dt className="font-medium text-slate-500">Short URL</dt>
-              <dd className="mt-1 break-all">
+          <article className="overflow-hidden rounded-[5px] bg-white shadow-[0_10px_24px_rgba(58,48,84,0.08)]">
+            <div className="px-6 py-4 md:grid md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center md:gap-6">
+              <div className="min-w-0">
+                <p className="break-all text-base text-[var(--color-very-dark-violet)]">
+                  {createdLink.originalUrl}
+                </p>
+                {createdLink.customAlias ? (
+                  <p className="mt-2 text-sm text-[var(--color-grayish-violet)]">
+                    Custom alias:{" "}
+                    <span className="font-bold text-[var(--color-dark-violet)]">
+                      {createdLink.customAlias}
+                    </span>
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="mt-4 border-t border-[var(--color-surface)] pt-4 md:mt-0 md:border-t-0 md:pt-0">
                 <a
-                  className="font-medium text-sky-700 underline decoration-sky-300 underline-offset-4"
+                  className="break-all text-base font-bold text-[var(--color-cyan)] transition hover:text-[var(--color-dark-violet)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-cyan)]"
                   href={createdLink.shortUrl}
                   rel="noreferrer"
                   target="_blank"
                 >
                   {createdLink.shortUrl}
                 </a>
-              </dd>
+              </div>
+
+              <button
+                className={`mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-[5px] px-6 py-3 text-base font-bold text-white transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 md:mt-0 md:w-[103px] ${
+                  copyStatus === "copied"
+                    ? "bg-[var(--color-dark-violet)] focus-visible:outline-[var(--color-dark-violet)]"
+                    : copyStatus === "error"
+                      ? "bg-[var(--color-red)] hover:bg-[var(--color-red)] focus-visible:outline-[var(--color-red)]"
+                      : "bg-[var(--color-cyan)] hover:bg-[var(--color-cyan-hover)] focus-visible:outline-[var(--color-cyan)]"
+                }`}
+                onClick={handleCopyShortUrl}
+                type="button"
+              >
+                {copyStatus === "copied"
+                  ? "Copied!"
+                  : copyStatus === "error"
+                    ? "Copy failed"
+                    : "Copy"}
+              </button>
             </div>
-            <div>
-              <dt className="font-medium text-slate-500">Short code</dt>
-              <dd className="mt-1 text-slate-900">{createdLink.shortCode}</dd>
-            </div>
-            <div>
-              <dt className="font-medium text-slate-500">Custom alias</dt>
-              <dd className="mt-1 text-slate-900">
-                {createdLink.customAlias ?? "Not set"}
-              </dd>
-            </div>
-            <div>
-              <dt className="font-medium text-slate-500">Created at</dt>
-              <dd className="mt-1 text-slate-900">
-                {formatCreatedAt(createdLink.createdAt)}
-              </dd>
-            </div>
-          </dl>
-        ) : (
-          <p className="mt-5 text-sm leading-6 text-slate-600">
-            Submit the form to render the normalized backend response here.
-          </p>
-        )}
-      </article>
-    </div>
+          </article>
+        ) : null}
+      </div>
+    </section>
   );
 }
