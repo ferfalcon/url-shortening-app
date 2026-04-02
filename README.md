@@ -60,6 +60,11 @@ By default:
 
 ## Environment
 
+- Local `.env` files are optional for basic local development.
+- Create them only when you want to override the defaults.
+
+In local development, the web app can run without `apps/web/.env` because Vite proxies `/api` requests to the local API by default.
+
 `apps/web/.env.example`
 
 ```bash
