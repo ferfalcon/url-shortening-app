@@ -1,7 +1,11 @@
+import { CreateLinkPanel } from "../features/links/create-link-panel";
 import { webEnv } from "../lib/env";
 
 export function HomeRoute() {
   const apiBaseUrl = webEnv.VITE_API_BASE_URL;
+  const apiWiringMessage = apiBaseUrl
+    ? `VITE_API_BASE_URL is configured as ${apiBaseUrl}. The form below posts to /api/links through that base URL.`
+    : "VITE_API_BASE_URL is not set, so local development falls back to the Vite /api proxy targeting http://127.0.0.1:3001.";
 
   return (
     <section className="grid w-full gap-6">
@@ -14,8 +18,9 @@ export function HomeRoute() {
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-7 text-slate-700">
           The frontend is wired with React, TypeScript, Vite, Tailwind, and
-          React Router. This screen stays intentionally lightweight until the
-          real product UI is built.
+          React Router. This page now includes the first tiny frontend slice for
+          anonymous link creation without jumping into the full landing-page
+          build.
         </p>
       </div>
 
@@ -36,12 +41,12 @@ export function HomeRoute() {
             Environment wiring
           </h2>
           <p className="mt-3 text-sm leading-6 text-slate-700">
-            {apiBaseUrl
-              ? `VITE_API_BASE_URL is configured as ${apiBaseUrl}.`
-              : "Set VITE_API_BASE_URL in apps/web/.env before wiring API calls."}
+            {apiWiringMessage}
           </p>
         </article>
       </div>
+
+      <CreateLinkPanel />
     </section>
   );
 }
