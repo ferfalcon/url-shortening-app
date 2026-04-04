@@ -1,13 +1,23 @@
 @baseUrl = http://localhost:3001
 @json = application/json
+@csrfCookie = shortly_csrf=replace-me
+@csrfToken = replace-me
 @sessionCookie = shortly_session=replace-me
 
 ### Health check
 GET {{baseUrl}}/healthz
 
+### CSRF token
+# Copy the csrfToken value from the JSON response body and the first cookie pair from
+# the Set-Cookie response header, for example:
+# shortly_csrf=abc123
+GET {{baseUrl}}/auth/csrf
+
 ### Sign up
 POST {{baseUrl}}/auth/signup
 Content-Type: {{json}}
+X-CSRF-Token: {{csrfToken}}
+Cookie: {{csrfCookie}}
 
 {
   "email": "user@example.com",
@@ -17,6 +27,8 @@ Content-Type: {{json}}
 ### Log in
 POST {{baseUrl}}/auth/login
 Content-Type: {{json}}
+X-CSRF-Token: {{csrfToken}}
+Cookie: {{csrfCookie}}
 
 {
   "email": "user@example.com",
@@ -26,6 +38,8 @@ Content-Type: {{json}}
 ### Log in - invalid credentials
 POST {{baseUrl}}/auth/login
 Content-Type: {{json}}
+X-CSRF-Token: {{csrfToken}}
+Cookie: {{csrfCookie}}
 
 {
   "email": "user@example.com",
@@ -43,7 +57,13 @@ GET {{baseUrl}}/auth/me
 
 ### Log out
 POST {{baseUrl}}/auth/logout
-Cookie: {{sessionCookie}}
+X-CSRF-Token: {{csrfToken}}
+Cookie: {{csrfCookie}}; {{sessionCookie}}
+
+### Log out - invalid CSRF token
+POST {{baseUrl}}/auth/logout
+X-CSRF-Token: not-the-right-token
+Cookie: {{csrfCookie}}; {{sessionCookie}}
 
 ### Create link - valid
 POST {{baseUrl}}/api/links

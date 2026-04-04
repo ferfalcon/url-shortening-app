@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { getOrCreateCsrfToken } from "../lib/csrf";
 import { clearSessionCookie, readSessionIdFromRequest, setSessionCookie } from "../lib/session-cookie";
 import { createErrorResponse, isAppError } from "../lib/app-error";
 import { authCredentialsSchema } from "../schemas/auth.schemas";
@@ -32,6 +33,15 @@ function handleAuthError(res: Response, error: unknown) {
       "An unexpected error occurred."
     )
   );
+}
+
+export function getCsrfTokenController(req: Request, res: Response) {
+  const csrfToken = getOrCreateCsrfToken(req, res);
+
+  res.set("Cache-Control", "no-store");
+  res.status(200).json({
+    csrfToken
+  });
 }
 
 export async function signUpController(req: Request, res: Response) {

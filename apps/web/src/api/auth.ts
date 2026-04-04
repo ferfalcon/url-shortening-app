@@ -19,6 +19,16 @@ const logoutResponseSchema = z.object({
   success: z.literal(true)
 });
 
+const csrfResponseSchema = z.object({
+  csrfToken: z.string().min(1)
+});
+
+const apiErrorCodeSchema = z.object({
+  error: z.object({
+    code: z.string().min(1)
+  })
+});
+
 export type AuthCredentialsInput = {
   email: string;
   password: string;
@@ -26,12 +36,26 @@ export type AuthCredentialsInput = {
 
 export type AuthenticatedUser = z.infer<typeof authenticatedUserSchema>;
 
-type AuthAction = "login" | "logout" | "me" | "signup";
+type AuthAction = "csrf" | "login" | "logout" | "me" | "signup";
+
+let csrfToken: string | null = null;
+let csrfTokenRequest: Promise<string> | null = null;
 
 function getDefaultAuthErrorMessage(
   action: AuthAction,
   statusCode?: number
 ) {
+  if (action === "csrf") {
+    return "We couldn't prepare the security check for this form. Please try again.";
+  }
+
+  if (
+    (action === "login" || action === "logout" || action === "signup") &&
+    statusCode === 403
+  ) {
+    return "Security check failed. Please refresh and try again.";
+  }
+
   if (action === "login" && statusCode === 401) {
     return "Invalid email or password.";
   }
@@ -63,6 +87,81 @@ async function readJson(response: Response) {
   }
 }
 
+function getApiErrorCode(payload: unknown) {
+  const parsedPayload = apiErrorCodeSchema.safeParse(payload);
+
+  if (!parsedPayload.success) {
+    return null;
+  }
+
+  return parsedPayload.data.error.code;
+}
+
+async function fetchCsrfTokenFromApi() {
+  let response: Response;
+
+  try {
+    response = await fetch(getApiUrl("/auth/csrf"), {
+      credentials: "include"
+    });
+  } catch {
+    throw new ApiRequestError(
+      "We couldn't reach the auth API. Check that the backend is running and that the web app can reach it."
+    );
+  }
+
+  const payload = await readJson(response);
+
+  if (!response.ok) {
+    throw new ApiRequestError(
+      getApiErrorMessage(payload) ??
+        getDefaultAuthErrorMessage("csrf", response.status),
+      response.status
+    );
+  }
+
+  const parsedResponse = csrfResponseSchema.safeParse(payload);
+
+  if (!parsedResponse.success) {
+    throw new ApiRequestError("The auth API returned an unexpected response.");
+  }
+
+  return parsedResponse.data.csrfToken;
+}
+
+async function ensureCsrfToken() {
+  if (csrfToken) {
+    return csrfToken;
+  }
+
+  if (!csrfTokenRequest) {
+    csrfTokenRequest = fetchCsrfTokenFromApi().then((nextToken) => {
+      csrfToken = nextToken;
+
+      return nextToken;
+    });
+
+    void csrfTokenRequest.finally(() => {
+      csrfTokenRequest = null;
+    });
+  }
+
+  return csrfTokenRequest;
+}
+
+function createHeaders(
+  csrfToken: string | null,
+  headers?: HeadersInit
+) {
+  const nextHeaders = new Headers(headers);
+
+  if (csrfToken) {
+    nextHeaders.set("X-CSRF-Token", csrfToken);
+  }
+
+  return nextHeaders;
+}
+
 async function requestAuthenticatedUser(
   pathname: string,
   action: AuthAction,
@@ -84,6 +183,10 @@ async function requestAuthenticatedUser(
   const payload = await readJson(response);
 
   if (!response.ok) {
+    if (getApiErrorCode(payload) === "CSRF_INVALID") {
+      csrfToken = null;
+    }
+
     throw new ApiRequestError(
       getApiErrorMessage(payload) ??
         getDefaultAuthErrorMessage(action, response.status),
@@ -104,33 +207,47 @@ export function fetchCurrentUser() {
   return requestAuthenticatedUser("/auth/me", "me");
 }
 
+export async function prefetchCsrfToken() {
+  try {
+    await ensureCsrfToken();
+  } catch {
+    // Keep the landing page usable even if the auth API is temporarily unavailable.
+  }
+}
+
 export function logIn(input: AuthCredentialsInput) {
-  return requestAuthenticatedUser("/auth/login", "login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(input)
-  });
+  return ensureCsrfToken().then((csrfToken) =>
+    requestAuthenticatedUser("/auth/login", "login", {
+      method: "POST",
+      headers: createHeaders(csrfToken, {
+        "Content-Type": "application/json"
+      }),
+      body: JSON.stringify(input)
+    })
+  );
 }
 
 export function signUp(input: AuthCredentialsInput) {
-  return requestAuthenticatedUser("/auth/signup", "signup", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(input)
-  });
+  return ensureCsrfToken().then((csrfToken) =>
+    requestAuthenticatedUser("/auth/signup", "signup", {
+      method: "POST",
+      headers: createHeaders(csrfToken, {
+        "Content-Type": "application/json"
+      }),
+      body: JSON.stringify(input)
+    })
+  );
 }
 
 export async function logOut() {
+  const currentCsrfToken = await ensureCsrfToken();
   let response: Response;
 
   try {
     response = await fetch(getApiUrl("/auth/logout"), {
       method: "POST",
-      credentials: "include"
+      credentials: "include",
+      headers: createHeaders(currentCsrfToken)
     });
   } catch {
     throw new ApiRequestError(
@@ -141,6 +258,10 @@ export async function logOut() {
   const payload = await readJson(response);
 
   if (!response.ok) {
+    if (getApiErrorCode(payload) === "CSRF_INVALID") {
+      csrfToken = null;
+    }
+
     throw new ApiRequestError(
       getApiErrorMessage(payload) ??
         getDefaultAuthErrorMessage("logout", response.status),

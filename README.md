@@ -59,6 +59,7 @@ By default:
 - health check is available at `http://localhost:3001/healthz`
 - link creation is available at `http://localhost:3001/api/links`
 - auth endpoints are available at `http://localhost:3001/auth/*`
+- state-changing auth requests first fetch `GET /auth/csrf` and then send `X-CSRF-Token`
 
 ## Environment
 
@@ -109,6 +110,7 @@ pnpm --filter @shortly/api dev
 - minimal Express API with a thin route/controller/service path for `GET /healthz`
 - `POST /api/links` for anonymous link creation with backend Zod validation
 - `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, and `GET /auth/me`
+- `GET /auth/csrf` plus CSRF validation for state-changing auth requests
 - internal short-link provider interface backed by a Spoo.me adapter
 - Prisma-backed PostgreSQL persistence for created links
 - Prisma-backed PostgreSQL persistence for users and server-side sessions

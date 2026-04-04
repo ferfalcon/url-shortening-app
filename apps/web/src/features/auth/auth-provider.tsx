@@ -8,6 +8,7 @@ import {
   fetchCurrentUser,
   logIn as requestLogIn,
   logOut as requestLogOut,
+  prefetchCsrfToken,
   signUp as requestSignUp,
   type AuthCredentialsInput
 } from "../../api/auth";
@@ -33,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const requestId = requestIdRef.current + 1;
 
     requestIdRef.current = requestId;
+    void prefetchCsrfToken();
 
     async function bootstrapAuthState() {
       try {

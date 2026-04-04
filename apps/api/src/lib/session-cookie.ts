@@ -34,8 +34,12 @@ function getCookieValue(cookieHeader: string | undefined, name: string) {
   return null;
 }
 
+export function readCookieValueFromRequest(req: Request, name: string) {
+  return getCookieValue(req.headers.cookie, name);
+}
+
 export function readSessionIdFromRequest(req: Request) {
-  return getCookieValue(req.headers.cookie, env.SESSION_COOKIE_NAME);
+  return readCookieValueFromRequest(req, env.SESSION_COOKIE_NAME);
 }
 
 export function setSessionCookie(
