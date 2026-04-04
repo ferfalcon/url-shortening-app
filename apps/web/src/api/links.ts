@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { webEnv } from "../lib/env";
 
-const createdLinkSchema = z.object({
+export const createdLinkSchema = z.object({
   id: z.string().min(1),
   originalUrl: z.string().url(),
   shortUrl: z.string().url(),
