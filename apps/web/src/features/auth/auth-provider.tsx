@@ -13,6 +13,7 @@ import {
 } from "../../api/auth";
 import { ApiRequestError } from "../../api/api-client";
 import { AuthContext } from "./auth-context";
+import { dispatchAuthLoggedOutEvent } from "./auth-events";
 
 function isUnauthenticatedError(error: unknown) {
   return error instanceof ApiRequestError && error.statusCode === 401;
@@ -107,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (requestId === requestIdRef.current) {
       setUser(null);
       setStatus("unauthenticated");
+      dispatchAuthLoggedOutEvent();
     }
   }
 
