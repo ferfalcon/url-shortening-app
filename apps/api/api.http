@@ -1,8 +1,49 @@
 @baseUrl = http://localhost:3001
 @json = application/json
+@sessionCookie = shortly_session=replace-me
 
 ### Health check
 GET {{baseUrl}}/healthz
+
+### Sign up
+POST {{baseUrl}}/auth/signup
+Content-Type: {{json}}
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+### Log in
+POST {{baseUrl}}/auth/login
+Content-Type: {{json}}
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+### Log in - invalid credentials
+POST {{baseUrl}}/auth/login
+Content-Type: {{json}}
+
+{
+  "email": "user@example.com",
+  "password": "wrong-password"
+}
+
+### Current user - authenticated
+# Copy only the first cookie pair from the Set-Cookie response header, for example:
+# shortly_session=abc123
+GET {{baseUrl}}/auth/me
+Cookie: {{sessionCookie}}
+
+### Current user - unauthenticated
+GET {{baseUrl}}/auth/me
+
+### Log out
+POST {{baseUrl}}/auth/logout
+Cookie: {{sessionCookie}}
 
 ### Create link - valid
 POST {{baseUrl}}/api/links
