@@ -3,11 +3,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import bgShortenDesktopUrl from "../../assets/landing/bg-shorten-desktop.svg";
 import bgShortenMobileUrl from "../../assets/landing/bg-shorten-mobile.svg";
-import {
-  ApiRequestError,
-  createLink,
-  type CreatedLink
-} from "../../api/links";
+import { ApiRequestError } from "../../api/api-client";
+import { createLink, type CreatedLink } from "../../api/links";
 import {
   clearSessionLinkHistory,
   prependSessionLinkHistory,
