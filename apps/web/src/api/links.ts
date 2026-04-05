@@ -21,6 +21,10 @@ export const createdLinkSchema = z.object({
 
 export type CreatedLink = z.infer<typeof createdLinkSchema>;
 
+const myLinksResponseSchema = z.object({
+  links: z.array(createdLinkSchema)
+});
+
 function getDefaultErrorMessage(statusCode?: number) {
   if (statusCode === 400) {
     return "Please check the URL and optional alias, then try again.";
@@ -31,6 +35,22 @@ function getDefaultErrorMessage(statusCode?: number) {
   }
 
   return "We couldn't create the short link. Please try again.";
+}
+
+function getDefaultMyLinksErrorMessage(statusCode?: number) {
+  if (statusCode === 401) {
+    return "Authentication is required.";
+  }
+
+  return "We couldn't load your links. Please try again.";
+}
+
+async function readJson(response: Response) {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
 }
 
 export async function createLink(
@@ -53,13 +73,7 @@ export async function createLink(
     );
   }
 
-  let payload: unknown = null;
-
-  try {
-    payload = await response.json();
-  } catch {
-    payload = null;
-  }
+  const payload = await readJson(response);
 
   if (!response.ok) {
     throw new ApiRequestError(
@@ -75,4 +89,36 @@ export async function createLink(
   }
 
   return parsedResponse.data;
+}
+
+export async function fetchMyLinks(): Promise<CreatedLink[]> {
+  let response: Response;
+
+  try {
+    response = await fetch(getApiUrl("/api/links/mine"), {
+      credentials: "include"
+    });
+  } catch {
+    throw new ApiRequestError(
+      "We couldn't reach the API. Check that the backend is running and that the web app can reach it."
+    );
+  }
+
+  const payload = await readJson(response);
+
+  if (!response.ok) {
+    throw new ApiRequestError(
+      getApiErrorMessage(payload) ??
+        getDefaultMyLinksErrorMessage(response.status),
+      response.status
+    );
+  }
+
+  const parsedResponse = myLinksResponseSchema.safeParse(payload);
+
+  if (!parsedResponse.success) {
+    throw new ApiRequestError("The API returned an unexpected response.");
+  }
+
+  return parsedResponse.data.links;
 }

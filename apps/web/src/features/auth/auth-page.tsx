@@ -1,4 +1,4 @@
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import type { AuthCredentialsInput } from "../../api/auth";
 import { LandingHeader } from "../../components/landing-header";
 import { AuthForm } from "./auth-form";
@@ -6,12 +6,35 @@ import { useAuth } from "./use-auth";
 
 type AuthPageMode = "login" | "signup";
 
+function getPostAuthRedirectPath(state: unknown) {
+  if (typeof state !== "object" || state === null) {
+    return "/";
+  }
+
+  const redirectState = state as {
+    from?: {
+      pathname?: unknown;
+    };
+  };
+
+  if (
+    typeof redirectState.from?.pathname !== "string" ||
+    !redirectState.from.pathname.startsWith("/")
+  ) {
+    return "/";
+  }
+
+  return redirectState.from.pathname;
+}
+
 export function AuthPage({ mode }: { mode: AuthPageMode }) {
+  const location = useLocation();
   const navigate = useNavigate();
   const auth = useAuth();
+  const postAuthRedirectPath = getPostAuthRedirectPath(location.state);
 
   if (auth.status === "authenticated") {
-    return <Navigate replace to="/" />;
+    return <Navigate replace to={postAuthRedirectPath} />;
   }
 
   async function handleSubmit(input: AuthCredentialsInput) {
@@ -21,7 +44,7 @@ export function AuthPage({ mode }: { mode: AuthPageMode }) {
       await auth.signUp(input);
     }
 
-    navigate("/", { replace: true });
+    navigate(postAuthRedirectPath, { replace: true });
   }
 
   return (

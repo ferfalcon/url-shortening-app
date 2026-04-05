@@ -45,6 +45,17 @@ class PrismaLinkRepository implements LinkRepository {
       }
     });
   }
+
+  async findManyByCreatedByUserId(userId: string): Promise<StoredLink[]> {
+    return prisma.link.findMany({
+      where: {
+        createdByUserId: userId
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    });
+  }
 }
 
 export const prismaLinkRepository = new PrismaLinkRepository();

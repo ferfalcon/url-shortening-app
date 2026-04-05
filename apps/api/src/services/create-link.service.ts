@@ -40,7 +40,8 @@ export function buildCreateLinkService({
   now = () => new Date()
 }: CreateLinkServiceDependencies) {
   return async function createLink(
-    input: CreateLinkRequest
+    input: CreateLinkRequest,
+    currentUserId: string | null = null
   ): Promise<CreatedLinkResponse> {
     if (input.customAlias) {
       const existingLink = await linkRepository.findByCustomAlias(
@@ -67,7 +68,8 @@ export function buildCreateLinkService({
       shortUrl: shortLink.shortUrl,
       shortCode: shortLink.shortCode,
       customAlias: input.customAlias ?? null,
-      createdAt: now()
+      createdAt: now(),
+      createdByUserId: currentUserId
     });
 
     return mapStoredLinkToResponse(storedLink);

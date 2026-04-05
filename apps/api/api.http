@@ -3,6 +3,7 @@
 @csrfCookie = shortly_csrf=replace-me
 @csrfToken = replace-me
 @sessionCookie = shortly_session=replace-me
+@ownedAlias = my-owned-alias
 
 ### Health check
 GET {{baseUrl}}/healthz
@@ -55,6 +56,9 @@ Cookie: {{sessionCookie}}
 ### Current user - unauthenticated
 GET {{baseUrl}}/auth/me
 
+### Current user links - unauthenticated
+GET {{baseUrl}}/api/links/mine
+
 ### Log out
 POST {{baseUrl}}/auth/logout
 X-CSRF-Token: {{csrfToken}}
@@ -81,6 +85,27 @@ Content-Type: {{json}}
   "originalUrl": "https://example.com/custom",
   "customAlias": "my-alias"
 }
+
+### Create link - authenticated ownerless comparison setup
+# Use the session cookie from login or sign up to create a link owned by the current user.
+POST {{baseUrl}}/api/links
+Content-Type: {{json}}
+Cookie: {{sessionCookie}}
+
+{
+  "originalUrl": "https://example.com/account-history",
+  "customAlias": "{{ownedAlias}}"
+}
+
+### Current user links - authenticated
+GET {{baseUrl}}/api/links/mine
+Cookie: {{sessionCookie}}
+
+### Ownership check flow
+# 1. Sign up or log in and copy the session cookie into @sessionCookie.
+# 2. Run the authenticated create-link request above.
+# 3. Run Current user links - authenticated and confirm the owned link appears.
+# 4. Run Create link - valid without Cookie and confirm the anonymous link does not appear in /api/links/mine.
 
 ### Create link - invalid URL
 POST {{baseUrl}}/api/links

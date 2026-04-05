@@ -36,13 +36,17 @@ type AuthServiceDependencies = {
   sessionDurationHours?: number;
 };
 
+function mapUser(user: StoredUser): AuthenticatedUser {
+  return {
+    id: user.id,
+    email: user.email,
+    createdAt: user.createdAt.toISOString()
+  };
+}
+
 function mapUserToResponse(user: StoredUser): AuthenticatedUserResponse {
   return {
-    user: {
-      id: user.id,
-      email: user.email,
-      createdAt: user.createdAt.toISOString()
-    }
+    user: mapUser(user)
   };
 }
 
@@ -77,20 +81,39 @@ async function requireActiveSession(
     sessionRepository
   }: Required<Pick<AuthServiceDependencies, "now" | "sessionRepository">>
 ) {
-  if (!sessionId) {
-    throw new AppError(401, "AUTH_REQUIRED", "Authentication is required.");
-  }
-
-  const session = await sessionRepository.findByIdWithUser(sessionId);
+  const session = await findActiveSession(sessionId, {
+    now,
+    sessionRepository
+  });
 
   if (!session) {
     throw new AppError(401, "AUTH_REQUIRED", "Authentication is required.");
   }
 
+  return session;
+}
+
+async function findActiveSession(
+  sessionId: string | null,
+  {
+    now,
+    sessionRepository
+  }: Required<Pick<AuthServiceDependencies, "now" | "sessionRepository">>
+) {
+  if (!sessionId) {
+    return null;
+  }
+
+  const session = await sessionRepository.findByIdWithUser(sessionId);
+
+  if (!session) {
+    return null;
+  }
+
   if (session.expiresAt <= now()) {
     await sessionRepository.deleteById(session.id);
 
-    throw new AppError(401, "AUTH_REQUIRED", "Authentication is required.");
+    return null;
   }
 
   return session;
@@ -200,6 +223,22 @@ export function buildGetCurrentUserService({
   };
 }
 
+export function buildGetOptionalCurrentUserService({
+  sessionRepository,
+  now = () => new Date()
+}: Pick<AuthServiceDependencies, "sessionRepository" | "now">) {
+  return async function getOptionalCurrentUser(
+    sessionId: string | null
+  ): Promise<AuthenticatedUser | null> {
+    const session = await findActiveSession(sessionId, {
+      now,
+      sessionRepository
+    });
+
+    return session ? mapUser(session.user) : null;
+  };
+}
+
 const authServiceDependencies = {
   sessionRepository: prismaSessionRepository,
   userRepository: prismaUserRepository
@@ -209,3 +248,6 @@ export const signUp = buildSignUpService(authServiceDependencies);
 export const logIn = buildLogInService(authServiceDependencies);
 export const logOut = buildLogOutService(authServiceDependencies);
 export const getCurrentUser = buildGetCurrentUserService(authServiceDependencies);
+export const getOptionalCurrentUser = buildGetOptionalCurrentUserService(
+  authServiceDependencies
+);

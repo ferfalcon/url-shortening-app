@@ -72,6 +72,9 @@ export function LandingHeader() {
             </span>
           ) : auth.isAuthenticated && auth.user ? (
             <>
+              <Link className={pageLinkClassName} to="/my-links">
+                My Links
+              </Link>
               <span
                 className="max-w-[16rem] truncate text-sm font-bold text-[var(--color-very-dark-violet)]"
                 title={auth.user.email}
@@ -178,6 +181,13 @@ export function LandingHeader() {
                 </p>
               ) : auth.isAuthenticated && auth.user ? (
                 <div className="grid gap-6">
+                  <Link
+                    className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    to="/my-links"
+                  >
+                    My Links
+                  </Link>
                   <p className="break-all text-base text-white/85">
                     Signed in as {auth.user.email}
                   </p>
