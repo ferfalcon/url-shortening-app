@@ -3,11 +3,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import bgShortenDesktopUrl from "../../assets/landing/bg-shorten-desktop.svg";
 import bgShortenMobileUrl from "../../assets/landing/bg-shorten-mobile.svg";
-import {
-  ApiRequestError,
-  createLink,
-  type CreatedLink
-} from "../../api/links";
+import { ApiRequestError } from "../../api/api-client";
+import { createLink, type CreatedLink } from "../../api/links";
+import { subscribeToAuthLoggedOut } from "../auth/auth-events";
 import {
   clearSessionLinkHistory,
   prependSessionLinkHistory,
@@ -90,6 +88,16 @@ export function CreateLinkPanel() {
   useEffect(() => {
     writeSessionLinkHistory(sessionLinks);
   }, [sessionLinks]);
+
+  useEffect(() => {
+    return subscribeToAuthLoggedOut(() => {
+      clearSessionLinkHistory();
+      setCopyStatuses({});
+      setLiveMessage("");
+      setSessionLinks([]);
+      setSubmissionError(null);
+    });
+  }, []);
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmissionError(null);

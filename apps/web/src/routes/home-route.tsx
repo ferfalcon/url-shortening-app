@@ -1,4 +1,3 @@
-import { useState } from "react";
 import bgBoostDesktopUrl from "../assets/landing/bg-boost-desktop.svg";
 import bgBoostMobileUrl from "../assets/landing/bg-boost-mobile.svg";
 import iconBrandRecognitionUrl from "../assets/landing/icon-brand-recognition.svg";
@@ -10,10 +9,8 @@ import iconPinterestUrl from "../assets/landing/icon-pinterest.svg";
 import iconTwitterUrl from "../assets/landing/icon-twitter.svg";
 import illustrationWorkingUrl from "../assets/landing/illustration-working.svg";
 import logoUrl from "../assets/landing/logo.svg";
+import { LandingHeader } from "../components/landing-header";
 import { CreateLinkPanel } from "../features/links/create-link-panel";
-
-const pageLinkClassName =
-  "text-[15px] font-bold text-[var(--color-grayish-violet)] transition hover:text-[var(--color-very-dark-blue)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-cyan)]";
 
 const ctaButtonClassName =
   "inline-flex items-center justify-center rounded-full bg-[var(--color-cyan)] px-10 py-4 text-[15px] font-bold text-white transition hover:bg-[var(--color-cyan-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-cyan)]";
@@ -65,109 +62,9 @@ const socialIcons = [
 ] as const;
 
 export function HomeRoute() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
   return (
     <>
-      <header className="relative z-20 bg-white" id="top">
-        <div className="mx-auto flex max-w-[1110px] items-center gap-8 px-6 pb-4 pt-10 md:pb-8 md:pt-12">
-          <a
-            aria-label="Shortly home"
-            href="#top"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            <img alt="Shortly" className="h-8 w-auto" src={logoUrl} />
-          </a>
-
-          <nav
-            aria-label="Primary"
-            className="hidden items-center gap-7 md:flex"
-          >
-            <a className={pageLinkClassName} href="#features">
-              Features
-            </a>
-            <span className={pageLinkClassName}>Pricing</span>
-            <a className={pageLinkClassName} href="#resources">
-              Resources
-            </a>
-          </nav>
-
-          <div className="ml-auto hidden items-center gap-9 md:flex">
-            <span className={pageLinkClassName}>Login</span>
-            <span className="inline-flex min-h-10 min-w-[104px] items-center justify-center rounded-full bg-[var(--color-cyan)] px-6 py-2 text-[15px] font-bold text-white">
-              Sign Up
-            </span>
-          </div>
-
-          <button
-            aria-controls="mobile-navigation"
-            aria-expanded={isMobileMenuOpen}
-            aria-label={isMobileMenuOpen ? "Close navigation" : "Open navigation"}
-            className="ml-auto inline-flex size-10 items-center justify-center text-[var(--color-grayish-violet)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-cyan)] md:hidden"
-            onClick={() => setIsMobileMenuOpen((currentValue) => !currentValue)}
-            type="button"
-          >
-            <svg
-              aria-hidden="true"
-              fill="none"
-              height="18"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2.5"
-              viewBox="0 0 24 24"
-              width="24"
-            >
-              {isMobileMenuOpen ? (
-                <path d="M18 6 6 18M6 6l12 12" />
-              ) : (
-                <path d="M3 6h18M3 12h18M3 18h18" />
-              )}
-            </svg>
-          </button>
-        </div>
-
-        {isMobileMenuOpen ? (
-          <div
-            className="mx-auto max-w-[1110px] px-6 pb-8 md:hidden"
-            id="mobile-navigation"
-          >
-            <nav
-              aria-label="Mobile primary"
-              className="rounded-[10px] bg-[var(--color-dark-violet)] px-6 py-10 text-center text-lg font-bold text-white shadow-[0_24px_48px_rgba(58,48,84,0.18)]"
-            >
-              <ul className="grid gap-8">
-                <li>
-                  <a
-                    className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
-                    href="#features"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Features
-                  </a>
-                </li>
-                <li>Pricing</li>
-                <li>
-                  <a
-                    className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
-                    href="#resources"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Resources
-                  </a>
-                </li>
-              </ul>
-
-              <div className="mt-8 border-t border-white/25 pt-8">
-                <p>Login</p>
-                <p className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[var(--color-cyan)] px-6 py-3">
-                  Sign Up
-                </p>
-              </div>
-            </nav>
-          </div>
-        ) : null}
-      </header>
+      <LandingHeader />
 
       <main className="overflow-x-clip">
         <section className="bg-white">

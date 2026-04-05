@@ -6,6 +6,10 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
+      "/auth": {
+        target: process.env.VITE_API_BASE_URL || "http://127.0.0.1:3001",
+        changeOrigin: true
+      },
       "/api": {
         target: process.env.VITE_API_BASE_URL || "http://127.0.0.1:3001",
         changeOrigin: true

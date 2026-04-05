@@ -1,5 +1,14 @@
 import { z } from "zod";
-import { webEnv } from "../lib/env";
+import {
+  ApiRequestError,
+  getApiErrorMessage,
+  getApiUrl
+} from "./api-client";
+
+export type CreateLinkInput = {
+  originalUrl: string;
+  customAlias?: string;
+};
 
 export const createdLinkSchema = z.object({
   id: z.string().min(1),
@@ -10,44 +19,7 @@ export const createdLinkSchema = z.object({
   createdAt: z.string().min(1)
 });
 
-const apiErrorSchema = z.object({
-  error: z.object({
-    message: z.string().min(1)
-  })
-});
-
-export type CreateLinkInput = {
-  originalUrl: string;
-  customAlias?: string;
-};
-
 export type CreatedLink = z.infer<typeof createdLinkSchema>;
-
-export class ApiRequestError extends Error {
-  constructor(
-    message: string,
-    public readonly statusCode?: number
-  ) {
-    super(message);
-    this.name = "ApiRequestError";
-  }
-}
-
-function getCreateLinkUrl() {
-  if (!webEnv.VITE_API_BASE_URL) {
-    if (import.meta.env.DEV) {
-      return "/api/links";
-    }
-
-    throw new ApiRequestError("VITE_API_BASE_URL is not configured.");
-  }
-
-  const baseUrl = webEnv.VITE_API_BASE_URL.endsWith("/")
-    ? webEnv.VITE_API_BASE_URL
-    : `${webEnv.VITE_API_BASE_URL}/`;
-
-  return new URL("api/links", baseUrl).toString();
-}
 
 function getDefaultErrorMessage(statusCode?: number) {
   if (statusCode === 400) {
@@ -61,24 +33,15 @@ function getDefaultErrorMessage(statusCode?: number) {
   return "We couldn't create the short link. Please try again.";
 }
 
-function getApiErrorMessage(payload: unknown) {
-  const parsedPayload = apiErrorSchema.safeParse(payload);
-
-  if (!parsedPayload.success) {
-    return null;
-  }
-
-  return parsedPayload.data.error.message;
-}
-
 export async function createLink(
   input: CreateLinkInput
 ): Promise<CreatedLink> {
   let response: Response;
 
   try {
-    response = await fetch(getCreateLinkUrl(), {
+    response = await fetch(getApiUrl("/api/links"), {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json"
       },

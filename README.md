@@ -10,6 +10,7 @@ The current milestone is the initial workspace foundation:
 - a minimal React + TypeScript + Vite frontend in `apps/web`
 - a minimal Express + TypeScript API in `apps/api`
 - a first backend slice for anonymous link creation using Prisma + PostgreSQL persistence and a real Spoo.me provider adapter
+- a backend auth foundation with database-backed sessions stored in PostgreSQL and an HttpOnly session cookie
 - a reserved `packages/shared` area for future shared contracts only when they add real value
 
 The original challenge reference assets are preserved in `frontend-mentor/`.
@@ -57,6 +58,8 @@ By default:
 - API runs at `http://localhost:3001`
 - health check is available at `http://localhost:3001/healthz`
 - link creation is available at `http://localhost:3001/api/links`
+- auth endpoints are available at `http://localhost:3001/auth/*`
+- state-changing auth requests first fetch `GET /auth/csrf` and then send `X-CSRF-Token`
 
 ## Environment
 
@@ -73,11 +76,15 @@ VITE_API_BASE_URL=http://localhost:3001
 
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/shortly?schema=public
+NODE_ENV=development
 PORT=3001
+SESSION_COOKIE_NAME=shortly_session
+SESSION_DURATION_HOURS=168
 SPOO_API_BASE_URL=https://spoo.me/api/v1
+WEB_ORIGIN=http://localhost:5173
 ```
 
-No API secret is required for anonymous Spoo.me link creation, but a PostgreSQL connection string is now required for persistence.
+No API secret is required for anonymous Spoo.me link creation. A PostgreSQL connection string is required for persistence, and the API now uses `WEB_ORIGIN` plus a named session cookie for backend auth.
 
 ## Available scripts
 
@@ -102,14 +109,16 @@ pnpm --filter @shortly/api dev
 - minimal React app with React Router and Tailwind configured
 - minimal Express API with a thin route/controller/service path for `GET /healthz`
 - `POST /api/links` for anonymous link creation with backend Zod validation
+- `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, and `GET /auth/me`
+- `GET /auth/csrf` plus CSRF validation for state-changing auth requests
 - internal short-link provider interface backed by a Spoo.me adapter
 - Prisma-backed PostgreSQL persistence for created links
+- Prisma-backed PostgreSQL persistence for users and server-side sessions
 - basic env examples for web and API
 - placeholder folder structure for future feature work
 
 ## What is intentionally not implemented yet
 
-- authentication and session handling
 - link history/dashboard features
 - production deployment setup
 - Docker setup
