@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { ApiRequestError } from "../api/api-client";
-import { fetchMyLinks, type CreatedLink } from "../api/links";
+import {
+  deleteLink,
+  fetchMyLinks,
+  type CreatedLink
+} from "../api/links";
 import { LandingHeader } from "../components/landing-header";
 import { useAuth } from "../features/auth/use-auth";
 
@@ -44,6 +48,10 @@ const cardClassName =
 export function MyLinksRoute() {
   const auth = useAuth();
   const location = useLocation();
+  const [deleteErrorMessages, setDeleteErrorMessages] = useState<
+    Record<string, string>
+  >({});
+  const [pendingDeleteLinkIds, setPendingDeleteLinkIds] = useState<string[]>([]);
   const [reloadToken, setReloadToken] = useState(0);
   const [state, setState] = useState<MyLinksState>({
     status: "idle",
@@ -63,6 +71,7 @@ export function MyLinksRoute() {
       links: [],
       errorMessage: null
     });
+    setDeleteErrorMessages({});
 
     async function loadLinks() {
       try {
@@ -101,6 +110,48 @@ export function MyLinksRoute() {
       isActive = false;
     };
   }, [auth.isAuthenticated, auth.user, reloadToken]);
+
+  async function handleDelete(linkId: string) {
+    setDeleteErrorMessages((currentValue) => {
+      const nextValue = { ...currentValue };
+
+      delete nextValue[linkId];
+
+      return nextValue;
+    });
+    setPendingDeleteLinkIds((currentValue) =>
+      currentValue.includes(linkId) ? currentValue : [...currentValue, linkId]
+    );
+
+    try {
+      await deleteLink(linkId);
+
+      setState((currentState) => {
+        if (currentState.status !== "success") {
+          return currentState;
+        }
+
+        return {
+          ...currentState,
+          links: currentState.links.filter((link) => link.id !== linkId)
+        };
+      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof ApiRequestError
+          ? error.message
+          : "We couldn't delete that link. Please try again.";
+
+      setDeleteErrorMessages((currentValue) => ({
+        ...currentValue,
+        [linkId]: errorMessage
+      }));
+    } finally {
+      setPendingDeleteLinkIds((currentValue) =>
+        currentValue.filter((pendingLinkId) => pendingLinkId !== linkId)
+      );
+    }
+  }
 
   if (auth.status === "loading") {
     return (
@@ -243,6 +294,29 @@ export function MyLinksRoute() {
                       </dd>
                     </div>
                   </dl>
+
+                  <div className="mt-5 flex flex-col gap-3 border-t border-[rgba(59,48,84,0.08)] pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p
+                      className="min-h-6 text-sm text-[var(--color-red)]"
+                      role={deleteErrorMessages[link.id] ? "alert" : undefined}
+                    >
+                      {deleteErrorMessages[link.id] ?? ""}
+                    </p>
+
+                    <button
+                      aria-busy={pendingDeleteLinkIds.includes(link.id)}
+                      className="inline-flex min-h-11 items-center justify-center rounded-full border border-[rgba(244,98,98,0.35)] px-5 py-2 text-sm font-bold text-[var(--color-red)] transition hover:border-[var(--color-red)] hover:bg-[rgba(244,98,98,0.08)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-cyan)] disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={pendingDeleteLinkIds.includes(link.id)}
+                      onClick={() => {
+                        void handleDelete(link.id);
+                      }}
+                      type="button"
+                    >
+                      {pendingDeleteLinkIds.includes(link.id)
+                        ? "Deleting..."
+                        : "Delete from history"}
+                    </button>
+                  </div>
                 </article>
               ))}
             </section>

@@ -3,7 +3,10 @@
 @csrfCookie = shortly_csrf=replace-me
 @csrfToken = replace-me
 @sessionCookie = shortly_session=replace-me
+@otherSessionCookie = shortly_session=replace-other-user
 @ownedAlias = my-owned-alias
+@ownedLinkId = replace-owned-link-id
+@missingOrOtherLinkId = replace-missing-or-other-link-id
 
 ### Health check
 GET {{baseUrl}}/healthz
@@ -101,11 +104,46 @@ Cookie: {{sessionCookie}}
 GET {{baseUrl}}/api/links/mine
 Cookie: {{sessionCookie}}
 
+### Delete owned link - authenticated
+# 1. Sign up or log in and copy the session cookie into @sessionCookie.
+# 2. Create an owned link and copy its id into @ownedLinkId.
+# 3. Run this request and expect 204 No Content.
+DELETE {{baseUrl}}/api/links/{{ownedLinkId}}
+X-CSRF-Token: {{csrfToken}}
+Cookie: {{csrfCookie}}; {{sessionCookie}}
+
+### Delete owned link - invalid CSRF token
+DELETE {{baseUrl}}/api/links/{{ownedLinkId}}
+X-CSRF-Token: not-the-right-token
+Cookie: {{csrfCookie}}; {{sessionCookie}}
+
+### Delete link - unauthenticated
+DELETE {{baseUrl}}/api/links/{{ownedLinkId}}
+X-CSRF-Token: {{csrfToken}}
+Cookie: {{csrfCookie}}
+
+### Delete link - missing or not owned
+# Copy a different user's session cookie into @otherSessionCookie to verify ownership safely.
+DELETE {{baseUrl}}/api/links/{{missingOrOtherLinkId}}
+X-CSRF-Token: {{csrfToken}}
+Cookie: {{csrfCookie}}; {{sessionCookie}}
+
+### Delete link - other user session attempting delete
+DELETE {{baseUrl}}/api/links/{{ownedLinkId}}
+X-CSRF-Token: {{csrfToken}}
+Cookie: {{csrfCookie}}; {{otherSessionCookie}}
+
+### Current user links - authenticated after delete
+# Run after a successful delete and confirm the deleted id no longer appears.
+GET {{baseUrl}}/api/links/mine
+Cookie: {{sessionCookie}}
+
 ### Ownership check flow
 # 1. Sign up or log in and copy the session cookie into @sessionCookie.
 # 2. Run the authenticated create-link request above.
 # 3. Run Current user links - authenticated and confirm the owned link appears.
-# 4. Run Create link - valid without Cookie and confirm the anonymous link does not appear in /api/links/mine.
+# 4. Run Delete owned link - authenticated and then Current user links - authenticated after delete.
+# 5. Run Create link - valid without Cookie and confirm the anonymous link does not appear in /api/links/mine.
 
 ### Create link - invalid URL
 POST {{baseUrl}}/api/links

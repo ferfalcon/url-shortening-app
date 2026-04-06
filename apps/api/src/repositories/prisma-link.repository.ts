@@ -49,12 +49,32 @@ class PrismaLinkRepository implements LinkRepository {
   async findManyByCreatedByUserId(userId: string): Promise<StoredLink[]> {
     return prisma.link.findMany({
       where: {
-        createdByUserId: userId
+        createdByUserId: userId,
+        deletedAt: null
       },
       orderBy: {
         createdAt: "desc"
       }
     });
+  }
+
+  async softDeleteByIdAndCreatedByUserId(
+    linkId: string,
+    userId: string,
+    deletedAt: Date
+  ): Promise<boolean> {
+    const result = await prisma.link.updateMany({
+      where: {
+        id: linkId,
+        createdByUserId: userId,
+        deletedAt: null
+      },
+      data: {
+        deletedAt
+      }
+    });
+
+    return result.count > 0;
   }
 }
 

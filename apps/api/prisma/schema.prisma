@@ -14,10 +14,12 @@ model Link {
   shortCode       String
   customAlias     String?  @unique
   createdAt       DateTime @default(now())
+  deletedAt       DateTime?
   createdByUserId String?
   createdByUser   User?    @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   @@index([createdByUserId])
+  @@index([deletedAt])
 }
 
 model User {

@@ -4,6 +4,7 @@ import {
   getApiErrorMessage,
   getApiUrl
 } from "./api-client";
+import { clearCachedCsrfToken, createCsrfHeaders } from "./auth";
 
 export type CreateLinkInput = {
   originalUrl: string;
@@ -43,6 +44,22 @@ function getDefaultMyLinksErrorMessage(statusCode?: number) {
   }
 
   return "We couldn't load your links. Please try again.";
+}
+
+function getDefaultDeleteLinkErrorMessage(statusCode?: number) {
+  if (statusCode === 401) {
+    return "Authentication is required.";
+  }
+
+  if (statusCode === 403) {
+    return "Security check failed. Please refresh and try again.";
+  }
+
+  if (statusCode === 404) {
+    return "That link could not be found in your history.";
+  }
+
+  return "We couldn't delete that link. Please try again.";
 }
 
 async function readJson(response: Response) {
@@ -121,4 +138,34 @@ export async function fetchMyLinks(): Promise<CreatedLink[]> {
   }
 
   return parsedResponse.data.links;
+}
+
+export async function deleteLink(linkId: string): Promise<void> {
+  let response: Response;
+
+  try {
+    response = await fetch(getApiUrl(`/api/links/${linkId}`), {
+      method: "DELETE",
+      credentials: "include",
+      headers: await createCsrfHeaders()
+    });
+  } catch {
+    throw new ApiRequestError(
+      "We couldn't reach the API. Check that the backend is running and that the web app can reach it."
+    );
+  }
+
+  const payload = await readJson(response);
+
+  if (!response.ok) {
+    if (response.status === 403) {
+      clearCachedCsrfToken();
+    }
+
+    throw new ApiRequestError(
+      getApiErrorMessage(payload) ??
+        getDefaultDeleteLinkErrorMessage(response.status),
+      response.status
+    );
+  }
 }
