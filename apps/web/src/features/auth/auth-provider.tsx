@@ -13,6 +13,7 @@ import {
   type AuthCredentialsInput
 } from "../../api/auth";
 import { ApiRequestError } from "../../api/api-client";
+import { clearSessionLinkHistory } from "../links/session-link-history";
 import { AuthContext } from "./auth-context";
 import { dispatchAuthLoggedOutEvent } from "./auth-events";
 
@@ -108,9 +109,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await requestLogOut();
 
     if (requestId === requestIdRef.current) {
+      clearSessionLinkHistory();
+      dispatchAuthLoggedOutEvent();
       setUser(null);
       setStatus("unauthenticated");
-      dispatchAuthLoggedOutEvent();
     }
   }
 

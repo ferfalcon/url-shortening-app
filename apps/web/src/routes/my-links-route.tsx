@@ -7,6 +7,10 @@ import {
   type CreatedLink
 } from "../api/links";
 import { LandingHeader } from "../components/landing-header";
+import {
+  clearAuthLoggedOutNavigationPending,
+  hasAuthLoggedOutNavigationPending
+} from "../features/auth/auth-events";
 import { useAuth } from "../features/auth/use-auth";
 
 type LoadingState = {
@@ -171,6 +175,14 @@ export function MyLinksRoute() {
   }
 
   if (!auth.isAuthenticated || !auth.user) {
+    if (hasAuthLoggedOutNavigationPending()) {
+      queueMicrotask(() => {
+        clearAuthLoggedOutNavigationPending();
+      });
+
+      return <Navigate replace to="/" />;
+    }
+
     return <Navigate replace state={{ from: location }} to="/login" />;
   }
 
