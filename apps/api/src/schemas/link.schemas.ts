@@ -38,4 +38,8 @@ export const createLinkRequestSchema = z.object({
   )
 });
 
+export const deleteLinkRequestParamsSchema = z.object({
+  linkId: z.uuid("linkId must be a valid UUID")
+});
+
 export type CreateLinkRequest = z.infer<typeof createLinkRequestSchema>;

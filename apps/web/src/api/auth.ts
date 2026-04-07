@@ -97,6 +97,10 @@ function getApiErrorCode(payload: unknown) {
   return parsedPayload.data.error.code;
 }
 
+export function clearCachedCsrfToken() {
+  csrfToken = null;
+}
+
 async function fetchCsrfTokenFromApi() {
   let response: Response;
 
@@ -162,6 +166,10 @@ function createHeaders(
   return nextHeaders;
 }
 
+export async function createCsrfHeaders(headers?: HeadersInit) {
+  return createHeaders(await ensureCsrfToken(), headers);
+}
+
 async function requestAuthenticatedUser(
   pathname: string,
   action: AuthAction,
@@ -184,7 +192,7 @@ async function requestAuthenticatedUser(
 
   if (!response.ok) {
     if (getApiErrorCode(payload) === "CSRF_INVALID") {
-      csrfToken = null;
+      clearCachedCsrfToken();
     }
 
     throw new ApiRequestError(
@@ -259,7 +267,7 @@ export async function logOut() {
 
   if (!response.ok) {
     if (getApiErrorCode(payload) === "CSRF_INVALID") {
-      csrfToken = null;
+      clearCachedCsrfToken();
     }
 
     throw new ApiRequestError(

@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import { AppShell } from "../components/app-shell";
 import { HomeRoute } from "../routes/home-route";
 import { LoginRoute } from "../routes/login-route";
+import { MyLinksRoute } from "../routes/my-links-route";
 import { SignUpRoute } from "../routes/signup-route";
 
 export const router = createBrowserRouter([
@@ -20,6 +21,10 @@ export const router = createBrowserRouter([
       {
         path: "signup",
         element: <SignUpRoute />
+      },
+      {
+        path: "my-links",
+        element: <MyLinksRoute />
       }
     ]
   }

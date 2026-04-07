@@ -8,7 +8,7 @@ export function createApp() {
   app.disable("x-powered-by");
   app.use((req, res, next) => {
     res.header("Access-Control-Allow-Headers", "Content-Type, X-CSRF-Token");
-    res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+    res.header("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
 
     if (req.headers.origin === env.WEB_ORIGIN) {
       res.header("Access-Control-Allow-Origin", env.WEB_ORIGIN);

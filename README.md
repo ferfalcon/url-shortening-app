@@ -11,6 +11,7 @@ The current milestone is the initial workspace foundation:
 - a minimal Express + TypeScript API in `apps/api`
 - a first backend slice for anonymous link creation using Prisma + PostgreSQL persistence and a real Spoo.me provider adapter
 - a backend auth foundation with database-backed sessions stored in PostgreSQL and an HttpOnly session cookie
+- a first authenticated link history slice with current-user ownership on signed-in link creation and a protected `My Links` page with delete-from-history support
 - a reserved `packages/shared` area for future shared contracts only when they add real value
 
 The original challenge reference assets are preserved in `frontend-mentor/`.
@@ -109,7 +110,10 @@ pnpm --filter @shortly/api dev
 - minimal React app with React Router and Tailwind configured
 - minimal Express API with a thin route/controller/service path for `GET /healthz`
 - `POST /api/links` for anonymous link creation with backend Zod validation
+- `POST /api/links` ownership assignment when a valid authenticated session is present
 - `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, and `GET /auth/me`
+- `GET /api/links/mine` for the authenticated user's link history
+- `DELETE /api/links/:linkId` to remove one owned link from the authenticated user's app history
 - `GET /auth/csrf` plus CSRF validation for state-changing auth requests
 - internal short-link provider interface backed by a Spoo.me adapter
 - Prisma-backed PostgreSQL persistence for created links
@@ -119,7 +123,7 @@ pnpm --filter @shortly/api dev
 
 ## What is intentionally not implemented yet
 
-- link history/dashboard features
+- metrics/history beyond the current owned links page
 - production deployment setup
 - Docker setup
 - final landing page UI

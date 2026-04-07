@@ -8,12 +8,18 @@ datasource db {
 }
 
 model Link {
-  id          String   @id
-  originalUrl String
-  shortUrl    String
-  shortCode   String
-  customAlias String?  @unique
-  createdAt   DateTime @default(now())
+  id              String   @id
+  originalUrl     String
+  shortUrl        String
+  shortCode       String
+  customAlias     String?  @unique
+  createdAt       DateTime @default(now())
+  deletedAt       DateTime?
+  createdByUserId String?
+  createdByUser   User?    @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdByUserId])
+  @@index([deletedAt])
 }
 
 model User {
@@ -21,6 +27,7 @@ model User {
   email        String    @unique
   passwordHash String
   createdAt    DateTime  @default(now())
+  links        Link[]
   sessions     Session[]
 }
 

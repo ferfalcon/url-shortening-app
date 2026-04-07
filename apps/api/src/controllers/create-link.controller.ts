@@ -1,6 +1,8 @@
 import type { Request, Response } from "express";
 import { createErrorResponse, isAppError } from "../lib/app-error";
+import { readSessionIdFromRequest } from "../lib/session-cookie";
 import { createLinkRequestSchema } from "../schemas/link.schemas";
+import { getOptionalCurrentUser } from "../services/auth.service";
 import { createLink } from "../services/create-link.service";
 
 export async function createLinkController(req: Request, res: Response) {
@@ -20,7 +22,10 @@ export async function createLinkController(req: Request, res: Response) {
   }
 
   try {
-    const link = await createLink(parsedRequest.data);
+    const currentUser = await getOptionalCurrentUser(
+      readSessionIdFromRequest(req)
+    );
+    const link = await createLink(parsedRequest.data, currentUser?.id ?? null);
 
     res.status(201).json(link);
   } catch (error) {
