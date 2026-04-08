@@ -21,6 +21,8 @@ const spooErrorSchema = z
   .passthrough();
 
 const PROVIDER_TIMEOUT_MS = 5_000;
+const PROVIDER_TIMEOUT_MESSAGE =
+  "The short-link provider took too long to respond. Please try again.";
 const PROVIDER_UNAVAILABLE_MESSAGE =
   "The short-link provider is unavailable right now. Please try again.";
 
@@ -95,13 +97,20 @@ function createInvalidRequestError(upstreamMessage: string | null) {
 }
 
 function createProviderFailureError(message = PROVIDER_UNAVAILABLE_MESSAGE) {
-  return new AppError(502, "SHORTENING_FAILED", message);
+  return new AppError(503, "SHORTENING_UNAVAILABLE", message);
 }
 
 class SpooShortLinkProvider implements ShortLinkProvider {
   async createShortLink(
     input: CreateShortLinkInput
   ): Promise<ShortLinkResult> {
+    const abortController = new AbortController();
+    let didTimeout = false;
+    const timeoutId = setTimeout(() => {
+      didTimeout = true;
+      abortController.abort();
+    }, PROVIDER_TIMEOUT_MS);
+
     try {
       const response = await fetch(buildSpooEndpointUrl("shorten"), {
         method: "POST",
@@ -113,7 +122,7 @@ class SpooShortLinkProvider implements ShortLinkProvider {
           long_url: input.originalUrl,
           ...(input.customAlias ? { alias: input.customAlias } : {})
         }),
-        signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS)
+        signal: abortController.signal
       });
 
       const payload = await readJsonBody(response);
@@ -152,8 +161,12 @@ class SpooShortLinkProvider implements ShortLinkProvider {
         throw error;
       }
 
-      if (error instanceof DOMException && error.name === "AbortError") {
-        throw createProviderFailureError();
+      if (
+        didTimeout ||
+        (error instanceof DOMException &&
+          (error.name === "AbortError" || error.name === "TimeoutError"))
+      ) {
+        throw createProviderFailureError(PROVIDER_TIMEOUT_MESSAGE);
       }
 
       if (error instanceof TypeError) {
@@ -161,6 +174,8 @@ class SpooShortLinkProvider implements ShortLinkProvider {
       }
 
       throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 }

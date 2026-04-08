@@ -162,9 +162,41 @@ Content-Type: {{json}}
   "customAlias": "my-alias"
 }
 
-### Provider failure tip
-# Temporarily run the API with an invalid SPOO_API_BASE_URL to verify normalized
-# upstream failure handling without changing the route/controller/service flow.
+### Create link - rate limit check
+# Run this request quickly more than 5 times within one minute.
+# Expect a 429 response with:
+# {
+#   "error": {
+#     "code": "RATE_LIMITED",
+#     "message": "Too many link creation requests. Please wait a minute and try again."
+#   }
+# }
+POST {{baseUrl}}/api/links
+Content-Type: {{json}}
+
+{
+  "originalUrl": "https://example.com/rate-limit-check"
+}
+
+### Create link - provider unavailable check
+# Temporarily run the API with SPOO_API_BASE_URL=http://127.0.0.1:65535/api/v1
+# and expect a normalized 503 response with code SHORTENING_UNAVAILABLE.
+POST {{baseUrl}}/api/links
+Content-Type: {{json}}
+
+{
+  "originalUrl": "https://example.com/provider-unavailable"
+}
+
+### Create link - provider timeout check
+# Point SPOO_API_BASE_URL at a slow local stub and expect a normalized 503 response
+# with code SHORTENING_UNAVAILABLE and a timeout-oriented message.
+POST {{baseUrl}}/api/links
+Content-Type: {{json}}
+
+{
+  "originalUrl": "https://example.com/provider-timeout"
+}
 
 ### Create link - empty body
 POST {{baseUrl}}/api/links

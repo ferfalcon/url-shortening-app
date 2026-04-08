@@ -35,6 +35,14 @@ function getDefaultErrorMessage(statusCode?: number) {
     return "That custom alias is already in use.";
   }
 
+  if (statusCode === 429) {
+    return "Too many link creation requests. Please wait a minute and try again.";
+  }
+
+  if (statusCode === 503 || statusCode === 504) {
+    return "The short-link provider is unavailable right now. Please try again.";
+  }
+
   return "We couldn't create the short link. Please try again.";
 }
 
